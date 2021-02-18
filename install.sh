@@ -121,6 +121,7 @@ echo
 echo "${Default}---------------------------------------------------------------------------"
 echo "${Default}Downloading containers..."
 docker pull camptocamp/geomapfish-tools:$gmfver
+docker pull camptocamp/geomapfish:$gmfver
 echo "${Green}OK."
 
 echo
