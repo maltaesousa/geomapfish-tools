@@ -10,9 +10,11 @@ chmod +x install.sh
 
 Then, follow the instructions.  
 
-Your application is at https://localhost:8484  
-The admin interface is at https://localhost:8484/admin  
+Your application is at https://localhost:8484.  
+The admin interface is at https://localhost:8484/admin.  
+The default credentials are admin/admin.
 
+That's it!  
 Enjoy :-)
 
 ___
@@ -114,4 +116,51 @@ Just start it, and follow the instructions:
 ```
 ./install.sh
 ```
+
+The questions asked by the installation script should be self-explanatory.  
+If there's something you don't understand, please feel free to ask for help at contact@geomapfish.org.
+
+## Step 5: First start
+
+You should now have a working instance of GeoMapFish.  
+Congratulations!
+
+Now, it's time to start your application for the first time. You should be able to do this at https://hostname:port (for exemple https://localhost:8484).
+
+Because your new instance of GeoMapFish doesn't have any valid SSL certificat yet, you will very likely get a warning from your Browser:
+```
+NET::ERR_CERT_AUTHORITY_INVALID
+```
+
+For the moment, just ignore it and proceed to website anyway.  
+You will be able to see the application:
+
+![First start](img/first_start.png)
+
+## Step 6: Login
+
+On the right side of the application, you will see a toolbar.  
+At the very top of this toolbar, you can login to your application.
+
+The default credentials are:
+- Username : **admin**
+- Password : **admin**
+
+![Admin Login](img/admin_login.png)
+
+Once logged in, you will have to change the admin password:
+
+![Change Password](img/change_pass.png)
+
+Ok, there you are !
+
+![Admin connected](img/admin_connected.png)
+
+Well... it's quite empty for now.  
+Let's add some data!
+
+## Step 7: Add some basemap
+
+If you want a nice mapping application, I guess you need a background map to get started.  
+Let's add one.
 
