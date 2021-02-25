@@ -4,6 +4,8 @@ Default=$'\e[0m'
 Green=$'\e[1;32m'
 Red=$'\e[1;31m'
 
+gmf_port=8484
+
 # Requirements
 ##############
 
@@ -33,6 +35,21 @@ checkuser()
   fi
 }
 
+checkport()
+{
+  used=`ss -tunlp | grep 'LISTEN' | grep $gmf_port | wc -l`
+  while [ used == 1 ]; do
+    $gmf_port=$gmf_port+1
+    if [ $gmf_port > 8500 ]
+    then
+      echo "${Red}[NOK] Cannot find any free port between 8484 and 8500 to start GMF."
+      exit
+    fi
+    used=`ss -tunlp | grep 'LISTEN' | grep $gmf_port | wc -l`
+  done
+  echo "${Green}[OK]  Port $gmf_port will be used by GeoMapFish"
+}
+
 echo
 echo "${Default}---------------------------------------------------------------------------"
 echo "${Default}Analysing requirements..."
@@ -40,8 +57,9 @@ check 'git'
 check 'docker'
 check 'docker-compose'
 check 'python3'
+check 'ss'
 checkuser
-
+checkport
 
 # Proxy configuration
 #####################
@@ -266,10 +284,10 @@ echo "${Green}OK."
 echo
 echo "${Default}---------------------------------------------------------------------------"
 echo "${Green}DONE!"
-echo "${Default}The application can be accessed at https://localhost:8484"
+echo "${Default}The application can be accessed at https://localhost:$gmf_port"
 echo "The next things to do:"
 echo "- Connect to the application with admin/admin and change the password."
-echo "- Go at https://localhost:8484/admin and add your own data."
+echo "- Go at https://localhost:$gmf_port/admin and add your own data."
 echo "- Enjoy !"
 
 
