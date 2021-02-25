@@ -4,7 +4,15 @@ Default=$'\e[0m'
 Green=$'\e[1;32m'
 Red=$'\e[1;31m'
 
+declare -i gmf_port
 gmf_port=8484
+gmf_host=`hostname`
+
+abort()
+{
+  echo "${Red}Aborting GeoMapFish installation...${Default}"
+  exit $1
+}
 
 # Requirements
 ##############
@@ -18,8 +26,7 @@ check()
   else
     echo "${Red}[NOK] $1 NOT FOUND"
     echo "Please install the missing requirement."
-    echo "Aborting GeoMapFish installation..."
-    exit
+    abort 91
   fi
 }
 
@@ -31,23 +38,24 @@ checkuser()
     echo "${Green}[OK]  User $user is in group docker"
   else
     echo "${Red}[NOK] User $user is not in group docker"
-    exit
+    abort 92
   fi
 }
 
 checkport()
 {
-  used=`ss -tunlp | grep 'LISTEN' | grep $gmf_port | wc -l`
-  while [ used == 1 ]; do
-    $gmf_port=$gmf_port+1
-    if [ $gmf_port > 8500 ]
+  for i in {8484..8500}
+  do
+    used=`ss -tunlp | grep 'LISTEN' | grep $i | wc -l`
+    if [ $used == 0 ]
     then
-      echo "${Red}[NOK] Cannot find any free port between 8484 and 8500 to start GMF."
-      exit
+      gmf_port=$i
+      echo "${Green}[OK]  Port $gmf_port will be used by GeoMapFish"
+      return
     fi
-    used=`ss -tunlp | grep 'LISTEN' | grep $gmf_port | wc -l`
   done
-  echo "${Green}[OK]  Port $gmf_port will be used by GeoMapFish"
+  echo "${Red}[NOK] Cannot find any free port between 8484 and 8500 to start GMF."  
+  abort 93
 }
 
 echo
@@ -78,16 +86,15 @@ echo
 echo "${Default}--------------------------------------------------------------------------"
 echo "${Default}If you are behind a proxy, the environment variables should be configured."
 echo "Please verify that the following configuration is correct:"
-proxy 'http_proxy'
-proxy 'https_proxy'
-proxy 'no_proxy'
+proxy 'HTTP_PROXY'
+proxy 'HTTPS_PROXY'
+proxy 'NO_PROXY'
 
 read -p "${Default}Do you want to continue with this configuration? [y/n] " -n 1 -r cont
 echo
 if ! [[ $cont =~ ^[Yy]$ ]]
 then
-  echo "${Red}Aborting GeoMapFish installation..."
-  exit
+  abort 96
 fi
  
 # GeoMapFish configuration
@@ -128,8 +135,7 @@ read -p "${Default}Do you want to start the installation? [y/n] " -n 1 -r cont
 echo
 if ! [[ $cont =~ ^[Yy]$ ]]
 then
-  echo "${Red}Aborting GeoMapFish installation..."
-  exit
+  abort 94
 fi
 
 # Start installation
@@ -183,7 +189,7 @@ then
   dbpass=secret
   
   docker pull postgis/postgis:11-3.1
-  docker kill gmf_postgis >> ../install.log
+  docker kill gmf_postgis >> ../install.log 2>&1
   docker run --rm --name gmf_postgis -p 5432:5432 -v postgres:/var/lib/postgresql/data -e POSTGRES_PASSWORD=secret -d postgis/postgis:11-3.1 >> ../install.log
   # Wait the postgres startup
   sleep 20
@@ -230,8 +236,7 @@ else
   echo
   if ! [[ $cont =~ ^[Yy]$ ]]
   then
-    echo "${Red}Aborting GeoMapFish installation..."
-    exit
+    abort 95
   fi
 
 fi
@@ -250,6 +255,8 @@ sed -i "s/PGPORT_SLAVE=30101/PGPORT_SLAVE=${dbport}/g" env.project
 sed -i "s/PGUSER=<user>/PGUSER=${dbuser}/g" env.project
 sed -i "s/PGPASSWORD=<pass>/PGPASSWORD=${dbpass}/g" env.project
 sed -i "s/PGSSLMODE=require/PGSSLMODE=prefer/g" env.project
+sed -i "s/VISIBLE_WEB_HOST=localhost/VISIBLE_WEB_HOST=${gmf_host}/g" env.default
+sed -i "s/8484/${gmf_port}/g" env.default
 echo "${Green}OK."
 
 # Initialize git and firt commit
@@ -284,10 +291,8 @@ echo "${Green}OK."
 echo
 echo "${Default}---------------------------------------------------------------------------"
 echo "${Green}DONE!"
-echo "${Default}The application can be accessed at https://localhost:$gmf_port"
+echo "${Default}The application can be accessed at https://$gmf_host:$gmf_port"
 echo "The next things to do:"
 echo "- Connect to the application with admin/admin and change the password."
-echo "- Go at https://localhost:$gmf_port/admin and add your own data."
+echo "- Go at https://$gmf_host:$gmf_port/admin and add your own data."
 echo "- Enjoy !"
-
-
