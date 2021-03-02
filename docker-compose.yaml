@@ -84,6 +84,8 @@ services:
     extends:
       file: docker-compose-lib.yaml
       service: alembic
+    volumes:
+      - ./__fix/env.py:/opt/alembic/env.py
 
   front:
     extends:
