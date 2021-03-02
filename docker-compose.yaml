@@ -58,6 +58,8 @@ services:
       service: tilecloudchain
     volumes_from:
       - config:ro
+    volumes:
+      - ./__fix/pyramid_logging.py:/opt/c2cwsgiutils/c2cwsgiutils/pyramid_logging.py
 
   tilegeneration_slave:
     extends:
@@ -65,6 +67,8 @@ services:
       service: tilegeneration_slave
     volumes_from:
       - config:ro
+    volumes:
+      - ./__fix/__init__.py:/app/tilecloud_chain/__init__.py
 
   geoportal:
     extends:
@@ -74,7 +78,7 @@ services:
       - config:ro
     volumes:
       - /var/sig:/var/sig:ro
-      - ./pyramid_logging.py:/opt/c2cwsgiutils/c2cwsgiutils/pyramid_logging.py
+      - ./__fix/pyramid_logging.py:/opt/c2cwsgiutils/c2cwsgiutils/pyramid_logging.py
 
   alembic:
     extends:
