@@ -2,11 +2,13 @@
 
 Default=$'\e[0m'
 Green=$'\e[1;32m'
+Blue=$'\e[1;34m'
 Red=$'\e[1;31m'
 
 declare -i gmf_port
 gmf_port=8484
 gmf_host=`hostname`
+using_proxy=false
 
 abort()
 {
@@ -21,7 +23,7 @@ check()
 {
   if command -v $1 > /dev/null
   then
-    version=`$1 --version 2>&1`
+    version=`$1 --version | head -1 2>&1`
     echo "${Green}[OK]  $version"
   else
     echo "${Red}[NOK] $1 NOT FOUND"
@@ -66,6 +68,8 @@ check 'docker'
 check 'docker-compose'
 check 'python3'
 check 'ss'
+check 'sed'
+check 'wget'
 checkuser
 checkport
 
@@ -74,11 +78,20 @@ checkport
 
 proxy()
 {
-  if [ -z ${!1} ]
+  if ! [ -z ${!1} ]
   then 
-    echo "${Green}$1: <not set>"
-  else
     echo "${Green}$1: set to ${!1}"
+    using_proxy=true
+    return
+  fi
+
+  up=${1^^}
+  if [ -z ${!up} ]
+  then 
+    echo "${Green}${1^^}: <not set>"
+  else
+    echo "${Green}${1^^}: set to ${!up}"
+    using_proxy=true
   fi
 }
 
@@ -86,9 +99,9 @@ echo
 echo "${Default}--------------------------------------------------------------------------"
 echo "${Default}If you are behind a proxy, the environment variables should be configured."
 echo "Please verify that the following configuration is correct:"
-proxy 'HTTP_PROXY'
-proxy 'HTTPS_PROXY'
-proxy 'NO_PROXY'
+proxy 'http_proxy'
+proxy 'https_proxy'
+proxy 'no_proxy'
 
 read -p "${Default}Do you want to continue with this configuration? [y/n] " -n 1 -r cont
 echo
@@ -183,6 +196,12 @@ then
   echo "Configuring GeoMapFish Database..."
   
   dbhost=172.17.0.1
+  # Check if the default network was overriden on this server
+  if [ -f /etc/docker/daemon.json ]
+  then
+    dbhost=`sed -r 's/.*"bip" *\: *"([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/' /etc/docker/daemon.json`
+  fi
+
   dbport=5432
   dbname=mydb
   dbuser=www
@@ -274,12 +293,64 @@ echo "${Default}Compiling GeoMapFish project..."
 ./build >> ../install.log
 echo "${Green}OK."
 
-
 # Start the app
 ###############
 echo "${Default}Starting GeoMapFish..."
 docker-compose up -d
 echo "${Green}OK."
+
+# Fix proxy error
+#################
+fix_proxy()
+{
+  if [[ "$2" = 'top' ]]
+  then
+    echo "def _fix_case(env):
+    if 'http_proxy' in env and 'HTTP_PROXY' in env:
+        env.pop('http_proxy')
+    if 'https_proxy' in env and 'HTTPS_PROXY' in env:
+        env.pop('https_proxy')
+    if 'no_proxy' in env and 'NO_PROXY' in env:
+        env.pop('no_proxy')
+    return env
+
+" | cat - $1 > temp && mv temp $1
+  else
+    echo "
+
+def _fix_case(env):
+    if 'http_proxy' in env and 'HTTP_PROXY' in env:
+        env.pop('http_proxy')
+    if 'https_proxy' in env and 'HTTPS_PROXY' in env:
+        env.pop('https_proxy')
+    if 'no_proxy' in env and 'NO_PROXY' in env:
+        env.pop('no_proxy')
+    return env" >> $1
+  fi
+
+  sed -i "s/dict(os.environ)/_fix_case(dict(os.environ))/g" $1
+}
+
+if [ "$using_proxy" = true ]
+then
+  echo
+  echo "${Default}---------------------------------------------------------------------------"
+  echo "${Blue}There's a problem with proxies... This has to be clarified with C2C"
+  echo "${Blue}For the moment, we'll try to fix the problem with a custom solution"
+  containerprefix=`echo 'my-super-gmf-app' | sed -r 's/-/_/g'`
+  mkdir __fix
+  docker cp ${containerprefix}_geoportal_1:/opt/c2cwsgiutils/c2cwsgiutils/pyramid_logging.py __fix/pyramid_logging.py
+  docker cp ${containerprefix}_geoportal_1:/opt/alembic/env.py __fix/env.py
+  docker cp ${containerprefix}_tilegeneration_slave_1:/app/tilecloud_chain/__init__.py __fix/__init__.py
+  fix_proxy "__fix/pyramid_logging.py"
+  fix_proxy "__fix/env.py" "top"
+  fix_proxy "__fix/__init__.py"
+  wget --quiet "https://raw.githubusercontent.com/remyguillaume/geomapfish-tools/main/docker-compose.yaml" -O docker-compose.yaml
+  echo "${Green}OK."
+
+  echo "${Default}Restarting GeoMapFish..."
+  docker-compose down && docker-compose up -d
+fi
 
 # Create schemas
 ################

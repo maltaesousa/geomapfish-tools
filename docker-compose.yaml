@@ -79,6 +79,7 @@ services:
     volumes:
       - /var/sig:/var/sig:ro
       - ./__fix/pyramid_logging.py:/opt/c2cwsgiutils/c2cwsgiutils/pyramid_logging.py
+      - ./__fix/env.py:/opt/alembic/env.py
 
   alembic:
     extends:
