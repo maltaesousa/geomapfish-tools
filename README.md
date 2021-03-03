@@ -18,8 +18,6 @@ That's it!
 Enjoy :-)
 
 ___
-___
-
 # Getting Started with GeoMapFish - **Long version**
 
 ## Introduction
@@ -28,7 +26,8 @@ This page goes through the basic, required steps to create your first GeoMapFish
 
 This guide is written for Linux systems. GeoMpaFish works on Windows systems as well, but as the community is using Linux in a large majority, there is no guide for Windows at the moment.
 
-## Step 1: Configure proxies
+___
+## **Step 1: Configure proxies**
 
 If you are behind a corporate proxy, you will have to configure the proxies. This can be done like this:
 
@@ -38,7 +37,8 @@ export https_proxy=http://user:password@proxy_host:proxy_port
 export no_proxy=localhost,127.0.0.1,mydomain.ch
 ```
 
-## Step 2: Install requirements
+___
+## **Step 2: Install requirements**
 
 The first step is to install the GeoMapFish requirements.  
 You will need to have the following components installed on your system:
@@ -61,7 +61,8 @@ In order to be able to use GeoMapFish, your linux user mut be part of the docker
 usermod -aG docker myuser
 ```
 
-## Step 3: Prepare database
+___
+## **Step 3: Prepare database**
 
 To store its configuration, GeoMapFish is using a PostgreSQL database with the following required extensions:
 
@@ -74,7 +75,7 @@ To store its configuration, GeoMapFish is using a PostgreSQL database with the f
 
 Otherwise, if you want to use you own database, the installation script will help you to configure GeoMapFish in order to use it, but you will have to execute first some commands on the database manually.
 
-### 1. Create database:
+### 1. Create database
 ```
 CREATE DATABASE mydb;
 ```
@@ -95,49 +96,53 @@ GRANT ALL ON SCHEMA main TO www;
 GRANT ALL ON SCHEMA main_static TO www;
 ```
 
-## Step 4: Install GeoMapFish
+___
+## **Step 4: Install GeoMapFish**
 
 You are now ready to install GeoMapFish.  
 Let's do it!
 
-First of all, download the installation script:
+### 1. Download the installation script
 ```
 wget https://raw.githubusercontent.com/remyguillaume/geomapfish-tools/
 main/install.sh
 ```
 
-Make it executable:
+### 2. Make it executable
 ```
 chmod +x install.sh
 ```
 
+### 3. Execute it
 The installation script will guide you through the configuration process.  
-Just start it, and follow the instructions:
+Just start the script, and follow the instructions:
 ```
 ./install.sh
 ```
 
 The questions asked by the installation script should be self-explanatory.  
-If there's something you don't understand, please feel free to ask for help at contact@geomapfish.org.
+If there's something you don't understand, feel free to ask for help at contact@geomapfish.org.  
+If you're encountering an error during the installation, please join the generated file `install.log` to your email.
 
-## Step 5: First start
+___
+## **Step 5: First start**
 
 You should now have a working instance of GeoMapFish.  
 Congratulations!
 
-Now, it's time to start your application for the first time. You should be able to do this at https://hostname:port (for exemple https://localhost:8484).
+Now, it's time to start your application for the first time. You should be able to do this at [https://hostname:port]() (for exemple https://localhost:8484).
 
-Because your new instance of GeoMapFish doesn't have any valid SSL certificat yet, you will very likely get a warning from your Browser:
-```
-NET::ERR_CERT_AUTHORITY_INVALID
-```
+Because your new instance of GeoMapFish doesn't have any valid SSL certificat yet, you will very likely get a `NET::ERR_CERT_AUTHORITY_INVALID` warning from your Browser:
+
+![SSL Error](img/ssl_error.png)
 
 For the moment, just ignore it and proceed to website anyway.  
 You will be able to see the application:
 
 ![First start](img/first_start.png)
 
-## Step 6: Login
+___
+## **Step 6: Login & change admin password**
 
 On the right side of the application, you will see a toolbar.  
 At the very top of this toolbar, you can login to your application.
@@ -159,8 +164,57 @@ Ok, there you are !
 Well... it's quite empty for now.  
 Let's add some data!
 
-## Step 7: Add some basemap
+___
+## **Step 7: Add basemap**
 
 If you want a nice mapping application, I guess you need a background map to get started.  
-Let's add one.
+Let's add a WMTS Layer from Swisstopo in order to use it as Basemap.
 
+### 1. Connect to the admin interface
+It is available at [https://hostname:port/admin]() (for exemple https://localhost:8484/admin).  
+As you are already logged in to GeoMapFish with the **admin** user, you are also automatically authenticated to the administration interface.
+
+### 2. Add a new WMTS Layer
+Navigate to the `WMTS Layers` tab:
+
+![WMTS Empty](img/wmts_empty.png)
+
+Create a new WMTS Layer, and configure it as follows:
+
+- **Name**: The name of the layer in GeoMapFish: `Swisstopo Pixelkarte Color`
+- **GetCapabilities URL**: The URL that will be used to get the Capabilities of the configured WMTS Layer: 
+  https://wmts.geo.admin.ch/1.0.0/WMTSCapabilities.xml. 
+- **WMTS layer name**: The identifier if the WMTS layer in the Capabilities: `ch.swisstopo.pixelkarte-farbe`. 
+- **Public**: Defines if this layer will be publicly available in the geoportal, or if it will have restricted access: `checked`
+- **Interfaces**: Defines in which interface this Layer will be available: `desktop` and `mobile`
+
+![WMTS Color](img/wmts_color.png)
+
+Click `Submit`.
+
+### 3. Add the Layer to background layers
+Navigate to the `Layer groups` tab:
+
+![Layer groups](img/groups.png)
+
+A layer group, with the name `background`, is already configured. This group is used to load available background maps in the application. The layers linked to this group will be visible in the application under the `basemap selector`:
+
+![Basemap Selector](img/basemap_selector.png)
+
+Let's add our new WMTS Layer to this group.  
+Open the layer group by double-clicking on it. In the `Children` area, select the WMTS Layer `Swisstopo Pixelkarte Color` and to add it the the group:
+
+![Add Basemap](img/add_basemap.png)
+
+Click `Submit`.
+
+### 4. Refresh the application
+
+Go back to your geoportal (https://localhost:8484), and refresh the website with `F5`. The new basemap should now be available in the background selector:
+
+![With Basemap](img/with_basemap.png)
+
+Congratulations, you've configured your first basemap in you geoportal!
+
+___
+## **Step 8: Add you own data**
