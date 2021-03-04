@@ -1,3 +1,8 @@
+# Requirements
+
+* Python > 3.6
+* pyaml (pip install pyaml)
+
 # Getting Started with GeoMapFish - **TL; DR**
 
 Open a linux console, and execute the following commands:
